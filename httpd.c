@@ -427,6 +427,14 @@ static void handle_connection(int client_fd) {
 
         handle_one_request(client_fd, method, path);
         free(work);
+
+        while (1) {
+            n = getline(&line, &cap, in);
+            if (n < 0) break;
+            rstrip_crlf(line);
+            if (line[0] == '\0') break;
+        }
+   
     }
 
     free(line);
@@ -439,8 +447,10 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    long port = strtol(argv[1], NULL, 10);
-    if (port < 1024 || port > 65535) {
+    char *end = NULL;
+    errno = 0;
+    long port = strtol(argv[1], &end, 10);
+    if (errno != 0 || end == argv[1] || *end != '\0' || port < 1024 || port > 65535) {
         fprintf(stderr, "Port must be between 1024 and 65535\n");
         return EXIT_FAILURE;
     }
